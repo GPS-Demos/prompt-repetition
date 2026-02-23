@@ -52,23 +52,31 @@ The model receives a list of 50 human names and is asked to identify the 25th na
 
 ### Prefill Counting Output (intermediate steps)
 
-The prefill condition reveals the model's step-by-step positional mapping:
+Without explicit counting, the model returns **Samuel Curtis** — the 26th name. The prefill condition forces the model to count step-by-step, revealing that it *can* map positions correctly when tracking is made explicit:
 
 ```
-1. Dale Lopez
-2. Peter Sanchez
-3. Allen Harris        <-- prefilled by us
-4. Scott Davis
-5. Hudson Leviathan
-...                    <-- model continues counting
-23. James Harris
-24. Craig Chavez
-25. **Paul Sanchez**   <-- correct
+No Repetition (implicit counting):
 
-The 25th name is Paul Sanchez.
+  "The 25th name on the list is Samuel Curtis."
+  Samuel Curtis is actually #26 — off by one.
+
+Prefill Counting (explicit counting):
+
+  1. Dale Lopez
+  2. Peter Sanchez
+  3. Allen Harris        <-- prefilled by us
+  4. Scott Davis
+  5. Hudson Leviathan
+  ...                    <-- model continues counting
+  23. James Harris
+  24. Craig Chavez
+  25. **Paul Sanchez**   <-- correct
+  26. Samuel Curtis
+
+  The 25th name is Paul Sanchez.
 ```
 
-When forced to count explicitly, the model maps every position correctly. Without this (No Repetition), the implicit positional encoding fails — the model returns Samuel Curtis (position 26), a classic off-by-one from the "lost in the middle" effect.
+The off-by-one error in the No Repetition condition shows that the model's implicit positional encoding is imprecise for items in the middle of the list. When forced to count explicitly (Prefill) or given a second pass at the context (Repetition), the model retrieves the correct answer.
 
 ## Usage
 
