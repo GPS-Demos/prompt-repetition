@@ -8,7 +8,7 @@ The paper demonstrates that simply repeating a prompt improves LLM accuracy on r
 
 ## Why It Works
 
-*Insight from Cris Benge:*
+*Insight from [Cris Benge](https://github.com/cbenge509):*
 
 During prefill encoding, the model processes tokens left-to-right. On the first pass, it encounters the list of names **before** it reaches the question "What's the 25th name?". Without knowing what will be asked, the encoder cannot attend specifically to the 25th item — it encodes the list generically, tracking relationships like "this name comes between item Y and item Z" rather than precise positional indices.
 
