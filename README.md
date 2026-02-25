@@ -2,44 +2,7 @@
 
 Reproducing findings from [Repeat to Recall: Prompt Repetition Improves LLM Recall of Long Contexts](https://arxiv.org/html/2512.14982v1) using Google Vertex AI.
 
-## Background
-
-The paper demonstrates that simply repeating a prompt improves LLM accuracy on retrieval tasks, particularly for information located in the middle of long contexts — the "lost in the middle" phenomenon. This effect is especially pronounced on smaller/lighter models.
-
-## Why It Works
-
-*Insight from [Cris Benge](https://github.com/cbenge509):*
-
-During prefill encoding, the model processes tokens left-to-right. On the first pass, it encounters the list of names **before** it reaches the question "What's the 25th name?". Without knowing what will be asked, the encoder cannot attend specifically to the 25th item — it encodes the list generically, tracking relationships like "this name comes between item Y and item Z" rather than precise positional indices.
-
-When the question finally arrives, the model must retroactively figure out positional indexing from a fuzzy encoding that didn't prioritize position 25. This is why it gets it wrong (off by one — returning the 26th name instead of the 25th).
-
-With repetition, the model has already seen the question once. The second time the list appears during prefill, the encoder **knows** to attend to the 25th item, producing a more targeted encoding and more reliable retrieval.
-
-The **Prefill (Counting)** condition in this benchmark makes this visible: by seeding the model's response with explicit numbering (`1. Dale Lopez, 2. Peter Sanchez, 3. Allen Harris...`), the model is forced to map each name to its position step-by-step. The output shows every intermediate step — and the model counts correctly all the way to `25. Paul Sanchez`. This confirms that the model *can* retrieve the right answer when positional tracking is made explicit, but fails when it must do so implicitly from a single-pass generic encoding.
-
-## Setup
-
-- **Model**: `gemini-2.0-flash-lite` (via Vertex AI)
-- **SDK**: `google-genai` v1.64.0
-- **Python**: 3.13
-- **Task**: NameIndex (N=50, i=25)
-- **Temperature**: 0.0
-
-### NameIndex Task
-
-The model receives a list of 50 human names and is asked to identify the 25th name. The target (`Paul Sanchez`) sits at the midpoint of the list — the position where models are most prone to errors.
-
-### Prompt Conditions
-
-| Condition | Format | Purpose |
-|---|---|---|
-| No Repetition | `<QUERY>` | Baseline — single pass |
-| Prefill (Counting) | Multi-turn: user sends `<QUERY>`, model response seeded with first 3 names numbered | Shows intermediate counting steps |
-| Vanilla Repetition | `<QUERY>\n<QUERY>` | Repeat without bridging text |
-| Verbose Repetition | `<QUERY>\nLet me repeat that:\n<QUERY>` | Repeat with bridging text |
-
-## Results
+## TL;DR
 
 **Expected answer: Paul Sanchez**
 
@@ -77,6 +40,43 @@ Prefill Counting (explicit counting):
 ```
 
 The off-by-one error in the No Repetition condition shows that the model's implicit positional encoding is imprecise for items in the middle of the list. When forced to count explicitly (Prefill) or given a second pass at the context (Repetition), the model retrieves the correct answer.
+
+## Background
+
+The paper demonstrates that simply repeating a prompt improves LLM accuracy on retrieval tasks, particularly for information located in the middle of long contexts — the "lost in the middle" phenomenon. This effect is especially pronounced on smaller/lighter models.
+
+## Why It Works
+
+*Insight from [Cris Benge](https://github.com/cbenge509):*
+
+During prefill encoding, the model processes tokens left-to-right. On the first pass, it encounters the list of names **before** it reaches the question "What's the 25th name?". Without knowing what will be asked, the encoder cannot attend specifically to the 25th item — it encodes the list generically, tracking relationships like "this name comes between item Y and item Z" rather than precise positional indices.
+
+When the question finally arrives, the model must retroactively figure out positional indexing from a fuzzy encoding that didn't prioritize position 25. This is why it gets it wrong (off by one — returning the 26th name instead of the 25th).
+
+With repetition, the model has already seen the question once. The second time the list appears during prefill, the encoder **knows** to attend to the 25th item, producing a more targeted encoding and more reliable retrieval.
+
+The **Prefill (Counting)** condition in this benchmark makes this visible: by seeding the model's response with explicit numbering (`1. Dale Lopez, 2. Peter Sanchez, 3. Allen Harris...`), the model is forced to map each name to its position step-by-step. The output shows every intermediate step — and the model counts correctly all the way to `25. Paul Sanchez`. This confirms that the model *can* retrieve the right answer when positional tracking is made explicit, but fails when it must do so implicitly from a single-pass generic encoding.
+
+## Setup
+
+- **Model**: `gemini-2.0-flash-lite` (via Vertex AI)
+- **SDK**: `google-genai` v1.64.0
+- **Python**: 3.13
+- **Task**: NameIndex (N=50, i=25)
+- **Temperature**: 0.0
+
+### NameIndex Task
+
+The model receives a list of 50 human names and is asked to identify the 25th name. The target (`Paul Sanchez`) sits at the midpoint of the list — the position where models are most prone to errors.
+
+### Prompt Conditions
+
+| Condition | Format | Purpose |
+|---|---|---|
+| No Repetition | `<QUERY>` | Baseline — single pass |
+| Prefill (Counting) | Multi-turn: user sends `<QUERY>`, model response seeded with first 3 names numbered | Shows intermediate counting steps |
+| Vanilla Repetition | `<QUERY>\n<QUERY>` | Repeat without bridging text |
+| Verbose Repetition | `<QUERY>\nLet me repeat that:\n<QUERY>` | Repeat with bridging text |
 
 ## Usage
 
