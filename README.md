@@ -11,7 +11,8 @@ Reproducing findings from [Repeat to Recall: Prompt Repetition Improves LLM Reca
 | No Repetition | Samuel Curtis (26th name, off by 1) | No |
 | Prefill (Counting) | Counts 1-25 correctly, returns Paul Sanchez | Yes |
 | Vanilla Repetition | Paul Sanchez | Yes |
-| Verbose Repetition | Paul Sanchez | Yes |
+
+Above results are for `gemini-2.0-flash-lite`.  The new version `gemini-3-flash-preview` fixed the repetition bug.
 
 ### Prefill Counting Output (intermediate steps)
 
@@ -59,7 +60,7 @@ The **Prefill (Counting)** condition in this benchmark makes this visible: by se
 
 ## Setup
 
-- **Model**: `gemini-2.0-flash-lite` (via Vertex AI)
+- **Models**: `gemini-2.0-flash-lite`, `gemini-3-flash-preview` (via Vertex AI)
 - **SDK**: `google-genai` v1.64.0
 - **Python**: 3.13
 - **Task**: NameIndex (N=50, i=25)
@@ -76,7 +77,6 @@ The model receives a list of 50 human names and is asked to identify the 25th na
 | No Repetition | `<QUERY>` | Baseline — single pass |
 | Prefill (Counting) | Multi-turn: user sends `<QUERY>`, model response seeded with first 3 names numbered | Shows intermediate counting steps |
 | Vanilla Repetition | `<QUERY>\n<QUERY>` | Repeat without bridging text |
-| Verbose Repetition | `<QUERY>\nLet me repeat that:\n<QUERY>` | Repeat with bridging text |
 
 ## Usage
 
@@ -84,6 +84,24 @@ The model receives a list of 50 human names and is asked to identify the 25th na
 python3.13 -m venv .venv
 .venv/bin/pip install -r requirements.txt
 .venv/bin/python run_benchmark.py
+```
+
+### Model Selection
+
+By default the benchmark runs against `gemini-2.0-flash-lite`. Use `--models` to select one or more models:
+
+```bash
+# Single model
+.venv/bin/python run_benchmark.py --models gemini-3-flash-preview
+
+# Multiple models (runs all conditions against each)
+.venv/bin/python run_benchmark.py --models gemini-2.0-flash-lite gemini-3-flash-preview
+```
+
+You can also set the `MODEL` environment variable (CLI `--models` takes precedence):
+
+```bash
+MODEL=gemini-3-flash-preview .venv/bin/python run_benchmark.py
 ```
 
 Configure your GCP project in `.env`:

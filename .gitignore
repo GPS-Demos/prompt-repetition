@@ -1,4 +1,23 @@
+# Python
 .venv/
-.env
 __pycache__/
 *.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# Environment
+.env
+.env.*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# OpenCode (AI tooling config — not project artifacts)
+.opencode/
