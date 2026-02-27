@@ -8,17 +8,24 @@ from google.genai import types
 
 load_dotenv()
 
-# 1. Initialize the client for Vertex AI
-client = genai.Client(
-    vertexai=os.getenv("VERTEXAI", "true").lower() == "true",
-    project=os.getenv("PROJECT"),
-    location=os.getenv("LOCATION"),
-)
+# 1. Vertex AI configuration
+VERTEXAI = os.getenv("VERTEXAI", "true").lower() == "true"
+PROJECT = os.getenv("PROJECT")
+DEFAULT_LOCATION = os.getenv("LOCATION", "us-central1")
 
 SUPPORTED_MODELS = [
     "gemini-2.0-flash-lite",
     "gemini-3-flash-preview",
 ]
+
+# Models that require the global endpoint
+GLOBAL_MODELS = {"gemini-3-flash-preview"}
+
+
+def get_client(model: str) -> genai.Client:
+    """Return a client with the correct location for the given model."""
+    location = "global" if model in GLOBAL_MODELS else DEFAULT_LOCATION
+    return genai.Client(vertexai=VERTEXAI, project=PROJECT, location=location)
 
 DEFAULT_MODEL = "gemini-2.0-flash-lite"
 
@@ -97,6 +104,7 @@ for model in models:
     print(f"=== Model: {model} ===")
     print()
 
+    client = get_client(model)
     model_results = []
     for idx, (name, prompt, is_prefill) in enumerate(conditions, 1):
         print(f"[{idx}/{len(conditions)}] {name}")
